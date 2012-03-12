@@ -60,16 +60,24 @@ mkpath($ldir) or die $!;
 mkpath($rdir) or die $!;
 
 # Build index info for left and right sides of the diff
+my $submodule_mode = "160000";
 my $null_mode = 0 x 6;
 my $null_sha1 = 0 x 40;
 my $lindex = "";
 my $rindex = "";
 my @working_tree;
+my %submodule;
 my @rawdiff = split('\0', $diffrtn);
 
 for (my $i=0; $i<@rawdiff; $i+=2) {
 	my ($lmode, $rmode, $lsha1, $rsha1, $status) = split(' ', substr($rawdiff[$i], 1));
 	my $path = $rawdiff[$i + 1];
+
+	if (($lmode eq $submodule_mode) or ($rmode eq $submodule_mode)) {
+		$submodule{$path}{left} = $lsha1;
+		$submodule{$path}{right} = $rsha1;
+		next;
+	}
 
 	if ($lmode ne $null_mode) {
 		$lindex .= "$lmode $lsha1\t$path\0";
@@ -107,6 +115,24 @@ for (@working_tree) {
 	}
 	copy($_, "$rdir/$_") or die $!;
 	chmod(stat($_)->mode, "$rdir/$_") or die $!;
+}
+
+# Changes to submodules require special treatment. This loop writes a
+# temporary file to both the left and right directories to show the
+# change in the recorded SHA1 for the submodule.
+foreach my $path (keys %submodule) {
+	if (defined $submodule{$path}{left}) {
+		open(SUBMOD, ">$ldir/$path") or die $!;
+		print(SUBMOD "submodule SHA1:\n");
+		print(SUBMOD "$submodule{$path}{left}");
+		close(SUBMOD);
+	}
+	if (defined $submodule{$path}{right}) {
+		open(SUBMOD, ">$rdir/$path") or die $!;
+		print(SUBMOD "submodule SHA1:\n");
+		print(SUBMOD "$submodule{$path}{right}");
+		close(SUBMOD);
+	}
 }
 
 # If '--extcmd' was given, run the specified tool and then exit
