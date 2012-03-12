@@ -123,14 +123,12 @@ for (@working_tree) {
 foreach my $path (keys %submodule) {
 	if (defined $submodule{$path}{left}) {
 		open(SUBMOD, ">$ldir/$path") or die $!;
-		print(SUBMOD "submodule SHA1:\n");
-		print(SUBMOD "$submodule{$path}{left}");
+		print(SUBMOD "Subproject commit $submodule{$path}{left}");
 		close(SUBMOD);
 	}
 	if (defined $submodule{$path}{right}) {
 		open(SUBMOD, ">$rdir/$path") or die $!;
-		print(SUBMOD "submodule SHA1:\n");
-		print(SUBMOD "$submodule{$path}{right}");
+		print(SUBMOD "Subproject commit $submodule{$path}{right}");
 		close(SUBMOD);
 	}
 }
