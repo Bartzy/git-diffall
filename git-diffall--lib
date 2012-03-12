@@ -108,13 +108,14 @@ $repo->command_oneline(["checkout-index", "-a", "--prefix=$rdir/"]);
 
 # Changes in the working tree need special treatment since they are
 # not part of the index
+my $workdir = $repo->wc_path();
 for (@working_tree) {
 	my $dir = dirname($_);
 	unless (-d "$rdir/$dir") {
 		mkpath("$rdir/$dir") or die $!;
 	}
-	copy($_, "$rdir/$_") or die $!;
-	chmod(stat($_)->mode, "$rdir/$_") or die $!;
+	copy("$workdir/$_", "$rdir/$_") or die $!;
+	chmod(stat("$workdir/$_")->mode, "$rdir/$_") or die $!;
 }
 
 # Changes to submodules require special treatment. This loop writes a
